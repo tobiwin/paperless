@@ -33,16 +33,16 @@ services:
     image: docker.io/valkey/valkey:9-alpine
     restart: unless-stopped
     volumes:
-      - ./cache:/data
+      - ${CACHE_DIR}:/data
   db:
     image: docker.io/library/postgres:18
     restart: unless-stopped
     volumes:
-      - ./db:/var/lib/postgresql
+      - ${DB_DIR}:/var/lib/postgresql
     environment:
       POSTGRES_DB: paperless
-      POSTGRES_USER: paperless
-      POSTGRES_PASSWORD: paperless
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U paperless -d paperless"]
       interval: 10s
@@ -60,17 +60,17 @@ services:
     environment:
       PGHOST: db
       PGDATABASE: paperless
-      PGUSER: paperless
-      PGPASSWORD: paperless
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${PGPASSWORD}
       BACKUP_SCHEDULE: "15 3 * * 0"
       RETENTION_COUNT: 52
       TZ: Europe/Berlin
     volumes:
-      - ./backup:/backup
-      - ./data:/source/data:ro
-      - ./media:/source/media:ro
-      - ./export:/source/export:ro
-      - ./consume:/source/consume:ro
+      - ${BACKUP_DIR}:/backup
+      - ${DATA_DIR}:/source/data:ro
+      - ${MEDIA_DIR}:/source/media:ro
+      - ${EXPORT_DIR}:/source/export:ro
+      - ${CONSUME_DIR}:/source/consume:ro
       - ./compose.yml:/source/compose.yml:ro
   webserver:
     image: ghcr.io/paperless-ngx/paperless-ngx:3.1
@@ -83,10 +83,10 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./data:/usr/src/paperless/data
-      - ./media:/usr/src/paperless/media
-      - ./export:/usr/src/paperless/export
-      - ./consume:/usr/src/paperless/consume
+      - ${DATA_DIR}:/usr/src/paperless/data
+      - ${MEDIA_DIR}:/usr/src/paperless/media
+      - ${EXPORT_DIR}:/usr/src/paperless/export
+      - ${CONSUME_DIR}:/usr/src/paperless/consume
     environment:
       PAPERLESS_REDIS: redis://broker:6379
       PAPERLESS_DBHOST: db
@@ -94,8 +94,8 @@ services:
       PAPERLESS_TIKA_ENABLED: 1
       PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
       PAPERLESS_TIKA_ENDPOINT: http://tika:9998
-      PAPERLESS_DBPASS: paperless
-      PAPERLESS_SECRET_KEY: LxIxIXp8ThKj6YufYNic@e^3yQa6!v9w
+      PAPERLESS_DBPASS: ${PAPERLESS_DBPASS}
+      PAPERLESS_SECRET_KEY: ${PAPERLESS_SECRET_KEY}
       PAPERLESS_OCR_LANGUAGE: deu+eng
       PAPERLESS_TIME_ZONE: Europe/Berlin
       PAPERLESS_FILENAME_FORMAT: "{{ document_type }}/{{ created_year }}/{{ correspondent }}/{{ title }}"
