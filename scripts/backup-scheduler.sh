@@ -3,7 +3,7 @@ set -eu
 
 BACKUP_SCHEDULE=${BACKUP_SCHEDULE:-"15 3 * * *"}
 
-printf '%s root /usr/local/bin/paperless-container-backup >> /proc/1/fd/1 2>> /proc/1/fd/2\n' \
+printf '%s root /bin/sh /usr/local/bin/paperless-container-backup >> /proc/1/fd/1 2>> /proc/1/fd/2\n' \
     "$BACKUP_SCHEDULE" \
     > /etc/cron.d/paperless-backup
 

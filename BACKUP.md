@@ -13,7 +13,7 @@ docker compose up -d
 The default schedule is weekly on Sunday at 03:15 in `Europe/Berlin`. The
 service retains exactly 52 weekly backups. Change `BACKUP_SCHEDULE`, `TZ`, or
 `RETENTION_COUNT` in the `backup` service in `compose.yml`, then recreate it with
-`docker compose up -d --build backup`.
+`docker compose up -d backup`.
 
 Run a backup immediately without waiting for the schedule:
 

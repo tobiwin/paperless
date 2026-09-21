@@ -70,10 +70,10 @@ The default filename format is:
 
 The `backup` service creates a PostgreSQL dump and archives the Paperless file-backed state once a week on Sunday at 03:15 in `Europe/Berlin`. It retains 52 backup sets.
 
-Start or rebuild the backup service with:
+Start the backup service with:
 
 ```sh
-docker compose up -d --build backup
+docker compose up -d backup
 ```
 
 Run a backup immediately:

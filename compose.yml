@@ -49,10 +49,15 @@ services:
       timeout: 5s
       retries: 5
   backup:
-    build:
-      context: .
-      dockerfile: backup/Dockerfile
+    image: docker.io/library/postgres:${POSTGRES_VERSION}
     user: root
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        apt-get update &&
+        DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends cron &&
+        rm -rf /var/lib/apt/lists/* &&
+        exec sh /usr/local/bin/backup-scheduler
     restart: unless-stopped
     depends_on:
       db:
@@ -67,6 +72,8 @@ services:
       TZ: Europe/Berlin
     volumes:
       - ${BACKUP_DIR}:/backup
+      - ./scripts/container-backup.sh:/usr/local/bin/paperless-container-backup:ro
+      - ./scripts/backup-scheduler.sh:/usr/local/bin/backup-scheduler:ro
       - ${DATA_DIR}:/source/data:ro
       - ${MEDIA_DIR}:/source/media:ro
       - ${EXPORT_DIR}:/source/export:ro
