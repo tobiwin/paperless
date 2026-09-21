@@ -79,6 +79,7 @@ services:
       - ${EXPORT_DIR}:/source/export:ro
       - ${CONSUME_DIR}:/source/consume:ro
       - ./compose.yml:/source/compose.yml:ro
+      - ./.env:/source/.env:ro
   webserver:
     image: ghcr.io/paperless-ngx/paperless-ngx:3.1
     restart: unless-stopped

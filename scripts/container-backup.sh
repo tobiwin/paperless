@@ -3,7 +3,7 @@ set -eu
 
 BACKUP_ROOT=${BACKUP_ROOT:-/backup}
 RETENTION_COUNT=${RETENTION_COUNT:-52}
-STAMP=$(date -u +%Y-%m-%dT%H-%M-%SZ)
+STAMP=$(date +%Y-%m-%dT%H-%M-%S%z)
 WORK_DIR="$BACKUP_ROOT/.working-$STAMP-$$"
 ARCHIVE_DIR="$BACKUP_ROOT/$STAMP"
 
