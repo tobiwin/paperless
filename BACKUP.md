@@ -21,15 +21,15 @@ Run a backup immediately without waiting for the schedule:
 docker compose exec backup /usr/local/bin/paperless-container-backup
 ```
 
-The original host-side script remains available for manual backups:
+The host-side helper remains available for manual backups and uses the same
+Compose backup service:
 
 ```sh
 ./scripts/paperless-backup.sh
 ```
 
-The container keeps exactly 52 backup sets locally. The optional host-side
-script uses its own day-based retention; override it with
-`BACKUP_ROOT=/path/to/backup RETENTION_DAYS=90`.
+The container and host-side helper both keep exactly 52 backup sets locally,
+as configured by `RETENTION_COUNT` in `compose.yml`.
 
 Local backups are not enough for disaster recovery. Copy them to a different
 machine or object storage, preferably with an encrypted tool such as Restic,
