@@ -33,12 +33,16 @@ as configured by `RETENTION_COUNT` in `compose.yml`.
 
 ## Restore
 
-Choose the backup set to restore and stop the stack first:
+### 1. Choose the backup
+
+Choose the backup set to restore and stop the stack:
 
 ```sh
 BACKUP=backup/2026-09-21T14-28-25+0200
 docker compose down
 ```
+
+### 2. Restore the files
 
 Restore the file-backed Paperless data. This intentionally does not extract
 the archived `.env` or `compose.yml`:
@@ -47,17 +51,31 @@ the archived `.env` or `compose.yml`:
 tar -xzf "$BACKUP/paperless-files.tar.gz" -C . data media export consume
 ```
 
-Start only PostgreSQL, recreate the Paperless database, and restore the dump:
+### 3. Restore the database
+
+Start only PostgreSQL:
 
 ```sh
 docker compose up -d --wait db
+```
+
+Recreate the Paperless database:
+
+```sh
 docker compose exec -T db sh -c \
 	'dropdb --if-exists -U "$POSTGRES_USER" paperless && \
 	 createdb -U "$POSTGRES_USER" paperless'
+```
+
+Restore the PostgreSQL dump:
+
+```sh
 docker compose exec -T db sh -c \
 	'pg_restore --no-owner --no-acl -U "$POSTGRES_USER" -d paperless' \
 	< "$BACKUP/paperless.dump"
 ```
+
+### 4. Start Paperless
 
 Start Paperless again:
 
