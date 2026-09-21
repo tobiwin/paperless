@@ -35,7 +35,7 @@ services:
     volumes:
       - ${CACHE_DIR}:/data
   db:
-    image: docker.io/library/postgres:18
+    image: docker.io/library/postgres:${POSTGRES_VERSION}
     restart: unless-stopped
     volumes:
       - ${DB_DIR}:/var/lib/postgresql

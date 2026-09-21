@@ -14,6 +14,7 @@ Create a `.env` file in the project root. Keep it private because it contains pa
 ```dotenv
 POSTGRES_USER=paperless
 POSTGRES_PASSWORD=change-this-password
+POSTGRES_VERSION=18
 PGPASSWORD=change-this-password
 PAPERLESS_DBPASS=change-this-password
 PAPERLESS_SECRET_KEY=generate-a-long-random-secret
