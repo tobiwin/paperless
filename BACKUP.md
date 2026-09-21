@@ -31,6 +31,44 @@ Compose backup service:
 The container and host-side helper both keep exactly 52 backup sets locally,
 as configured by `RETENTION_COUNT` in `compose.yml`.
 
+## Restore
+
+Choose the backup set to restore and stop the stack first:
+
+```sh
+BACKUP=backup/2026-09-21T14-28-25+0200
+docker compose down
+```
+
+Restore the file-backed Paperless data. This intentionally does not extract
+the archived `.env` or `compose.yml`:
+
+```sh
+tar -xzf "$BACKUP/paperless-files.tar.gz" -C . data media export consume
+```
+
+Start only PostgreSQL, recreate the Paperless database, and restore the dump:
+
+```sh
+docker compose up -d --wait db
+docker compose exec -T db sh -c \
+	'dropdb --if-exists -U "$POSTGRES_USER" paperless && \
+	 createdb -U "$POSTGRES_USER" paperless'
+docker compose exec -T db sh -c \
+	'pg_restore --no-owner --no-acl -U "$POSTGRES_USER" -d paperless' \
+	< "$BACKUP/paperless.dump"
+```
+
+Start Paperless again:
+
+```sh
+docker compose up -d
+```
+
+This replaces the current database and file-backed data. Make a separate copy
+of the current `db`, `data`, `media`, `export`, and `consume` directories first
+if they may still be needed.
+
 Local backups are not enough for disaster recovery. Copy them to a different
 machine or object storage, preferably with an encrypted tool such as Restic,
 and periodically perform a test restore. Do not back up the live `db/`
