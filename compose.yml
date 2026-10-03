@@ -67,19 +67,17 @@ services:
       PGDATABASE: paperless
       PGUSER: ${POSTGRES_USER}
       PGPASSWORD: ${PGPASSWORD}
-      BACKUP_SCHEDULE: "15 3 * * 0"
-      RETENTION_COUNT: 52
-      TZ: Europe/Berlin
+      BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-15 3 * * 0}
+      RETENTION_COUNT: ${RETENTION_COUNT:-52}
+      TZ: ${TZ:-Europe/Berlin}
     volumes:
       - ${BACKUP_DIR}:/backup
-      - ./scripts/container-backup.sh:/usr/local/bin/paperless-container-backup:ro
-      - ./scripts/backup-scheduler.sh:/usr/local/bin/backup-scheduler:ro
+      - ${SCRIPTS_DIR:-./scripts}/container-backup.sh:/usr/local/bin/paperless-container-backup:ro
+      - ${SCRIPTS_DIR:-./scripts}/backup-scheduler.sh:/usr/local/bin/backup-scheduler:ro
       - ${DATA_DIR}:/source/data:ro
       - ${MEDIA_DIR}:/source/media:ro
       - ${EXPORT_DIR}:/source/export:ro
       - ${CONSUME_DIR}:/source/consume:ro
-      - ./compose.yml:/source/compose.yml:ro
-      - ./.env:/source/.env:ro
   webserver:
     image: ghcr.io/paperless-ngx/paperless-ngx:3.1
     restart: unless-stopped

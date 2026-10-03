@@ -20,7 +20,7 @@ pg_dump \
     > "$WORK_DIR/paperless.dump"
 
 tar -czf "$WORK_DIR/paperless-files.tar.gz" \
-    -C /source data media export consume compose.yml .env
+    -C /source data media export consume
 
 cat > "$WORK_DIR/manifest.txt" <<EOF
 created_at=$STAMP

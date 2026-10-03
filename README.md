@@ -26,9 +26,14 @@ DATA_DIR=./data
 MEDIA_DIR=./media
 EXPORT_DIR=./export
 CONSUME_DIR=./consume
+SCRIPTS_DIR=./scripts
+
+BACKUP_SCHEDULE=15 3 * * 0
+RETENTION_COUNT=52
+TZ=Europe/Berlin
 ```
 
-`POSTGRES_PASSWORD`, `PGPASSWORD`, and `PAPERLESS_DBPASS` must match. The path variables can be changed to store data outside the repository directory.
+`POSTGRES_PASSWORD`, `PGPASSWORD`, and `PAPERLESS_DBPASS` must match. The path variables can be changed to store data outside the repository directory. `BACKUP_SCHEDULE` uses cron syntax, and `RETENTION_COUNT` controls how many backup sets are kept.
 
 ## Start the Stack
 
@@ -88,7 +93,7 @@ A host-side backup script is also available:
 ./scripts/paperless-backup.sh
 ```
 
-Backups include `.env`, so protect backup storage appropriately. See [BACKUP.md](BACKUP.md) for retention and disaster-recovery guidance.
+Backups contain your documents and application data, so protect backup storage appropriately. See [BACKUP.md](BACKUP.md) for retention and disaster-recovery guidance.
 
 ## Services
 
