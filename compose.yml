@@ -57,7 +57,7 @@ services:
         apt-get update &&
         DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends cron &&
         rm -rf /var/lib/apt/lists/* &&
-        exec sh /usr/local/bin/backup-scheduler
+        exec sh /scripts/backup-scheduler.sh
     restart: unless-stopped
     depends_on:
       db:
@@ -71,8 +71,7 @@ services:
       TZ: ${TZ:-Europe/Berlin}
     volumes:
       - ${BACKUP_DIR}:/backup
-      - ${SCRIPTS_DIR:-./scripts}/postgres-backup.sh:/usr/local/bin/paperless-postgres-backup:ro
-      - ${SCRIPTS_DIR:-./scripts}/backup-scheduler.sh:/usr/local/bin/backup-scheduler:ro
+      - ${SCRIPTS_DIR:-./scripts}:/scripts:ro
   webserver:
     image: ghcr.io/paperless-ngx/paperless-ngx:3.1
     restart: unless-stopped

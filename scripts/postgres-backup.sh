@@ -13,12 +13,23 @@ cleanup() {
 trap cleanup EXIT HUP INT TERM
 
 mkdir -p "$BACKUP_ROOT"
-pg_dump \
+printf 'Starting PostgreSQL dump: %s\n' "$BACKUP_FILE"
+if ! pg_dump \
     --format=custom \
     --no-owner \
     --no-acl \
-    --file="$TEMP_FILE"
-mv -f "$TEMP_FILE" "$BACKUP_FILE"
+    --file="$TEMP_FILE"; then
+    printf 'ERROR: pg_dump failed; no backup was installed.\n' >&2
+    exit 1
+fi
+if [ ! -s "$TEMP_FILE" ]; then
+    printf 'ERROR: pg_dump produced an empty file; no backup was installed.\n' >&2
+    exit 1
+fi
+if ! mv -f "$TEMP_FILE" "$BACKUP_FILE"; then
+    printf 'ERROR: could not move the dump into %s.\n' "$BACKUP_ROOT" >&2
+    exit 1
+fi
 
 DAILY_CUTOFF=$(date -d '29 days ago' +%Y-%m-%d)
 MONTH_START=$(date -d "$(date +%Y-%m-01) -12 months" +%Y-%m)
@@ -82,4 +93,4 @@ for candidate in "$BACKUP_ROOT"/paperless-????-??-??.dump; do
     fi
 done
 
-printf 'PostgreSQL backup created: %s\n' "$BACKUP_FILE"
+printf 'PostgreSQL backup complete: %s\n' "$BACKUP_FILE"

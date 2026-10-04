@@ -17,7 +17,7 @@ To run a dump immediately, open the `backup` container's console in Unraid and
 run:
 
 ```sh
-sh /usr/local/bin/paperless-postgres-backup
+sh /scripts/postgres-backup.sh
 ```
 
 The scheduled service logs success or failure in the container log. Set
