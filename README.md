@@ -15,7 +15,6 @@ Create a `.env` file in the project root. Keep it private because it contains pa
 POSTGRES_USER=paperless
 POSTGRES_PASSWORD=change-this-password
 POSTGRES_VERSION=18
-PGPASSWORD=change-this-password
 PAPERLESS_DBPASS=change-this-password
 PAPERLESS_SECRET_KEY=generate-a-long-random-secret
 
@@ -28,16 +27,16 @@ EXPORT_DIR=./export
 CONSUME_DIR=./consume
 SCRIPTS_DIR=./scripts
 
-BACKUP_SCHEDULE=15 3 * * 0
-RETENTION_COUNT=52
+BACKUP_SCHEDULE=15 3 * * *
 TZ=Europe/Berlin
 ```
 
-`POSTGRES_PASSWORD`, `PGPASSWORD`, and `PAPERLESS_DBPASS` must match. The path variables can be changed to store data outside the repository directory. `BACKUP_SCHEDULE` uses cron syntax, and `RETENTION_COUNT` controls how many backup sets are kept.
+`POSTGRES_PASSWORD` and `PAPERLESS_DBPASS` must match. The path variables can be changed to store data outside the repository directory. `BACKUP_SCHEDULE` uses cron syntax; the default runs daily at 03:15 in `Europe/Berlin`.
 
 ## Start the Stack
 
-Pull the images and start all services:
+On Unraid, deploy and manage the stack with Docker Compose Manager. On other
+Docker Compose installations, pull the images and start all services:
 
 ```sh
 docker compose pull
@@ -73,27 +72,15 @@ The default filename format is:
 
 ## Backups
 
-The `backup` service creates a PostgreSQL dump and archives the Paperless file-backed state once a week on Sunday at 03:15 in `Europe/Berlin`. It retains 52 backup sets.
+The `backup` service creates a PostgreSQL dump once a day at 03:15 in `Europe/Berlin`. It keeps daily dumps for 30 days, one dump per month for the previous 12 completed months, and one dump per year for the two years before that. File-backed Paperless data is not included.
 
-Start the backup service with:
-
-```sh
-docker compose up -d backup
-```
-
-Run a backup immediately:
+On Unraid, deploy the stack with Compose Manager; the scheduled backup service starts with the stack and does not require Compose commands in the Unraid shell. To run a dump immediately, open the backup container's console and run:
 
 ```sh
-docker compose exec backup /usr/local/bin/paperless-container-backup
+/usr/local/bin/paperless-postgres-backup
 ```
 
-A host-side backup script is also available:
-
-```sh
-./scripts/paperless-backup.sh
-```
-
-Backups contain your documents and application data, so protect backup storage appropriately. See [BACKUP.md](BACKUP.md) for retention and disaster-recovery guidance.
+See [BACKUP.md](BACKUP.md) for retention, restore steps, and guidance for including Paperless files in a later Duplicati backup.
 
 ## Services
 
@@ -104,7 +91,7 @@ Backups contain your documents and application data, so protect backup storage a
 | `broker` | Valkey message broker |
 | `gotenberg` | Office and document conversion |
 | `tika` | Document text and metadata extraction |
-| `backup` | Scheduled PostgreSQL and file-backed backups |
+| `backup` | Scheduled PostgreSQL dumps |
 
 ## Updating
 

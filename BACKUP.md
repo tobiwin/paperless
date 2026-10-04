@@ -1,92 +1,61 @@
-# Backups
+# PostgreSQL backups
 
-The `backup` Compose service runs the portable scheduler. It creates a
-PostgreSQL custom-format dump and an archive of Paperless file-backed state
-(`data`, `media`, `export`, and `consume`).
+The `backup` service makes one custom-format PostgreSQL dump each day at
+03:15 in `Europe/Berlin`. Each dump is written directly into `BACKUP_DIR` as
+`paperless-YYYY-MM-DD.dump`. This service backs up only the database; it does
+not archive Paperless documents or application files.
 
-Start the scheduler with the rest of the stack:
+## Unraid setup and use
 
-```sh
-docker compose up -d
-```
+Deploy or update the stack with Unraid's Docker Compose Manager. The `backup`
+service starts with the stack and schedules backups itself, so no
+`docker-compose` or `docker compose` command is needed on the Unraid shell.
+Make sure `BACKUP_DIR` points to a persistent Unraid share with enough free
+space and write permissions.
 
-The default schedule is weekly on Sunday at 03:15 in `Europe/Berlin`. The
-service retains exactly 52 weekly backups. Set `BACKUP_SCHEDULE`, `TZ`, and
-`RETENTION_COUNT` in `.env`, then recreate the service with
-`docker compose up -d backup`.
-
-Run a backup immediately without waiting for the schedule:
-
-```sh
-docker compose exec backup /usr/local/bin/paperless-container-backup
-```
-
-The host-side helper remains available for manual backups and uses the same
-Compose backup service:
+To run a dump immediately, open the `backup` container's console in Unraid and
+run:
 
 ```sh
-./scripts/paperless-backup.sh
+/usr/local/bin/paperless-postgres-backup
 ```
 
-The container and host-side helper both use the same `RETENTION_COUNT` from
-`.env` to limit the number of local backup sets.
+The scheduled service logs success or failure in the container log. Set
+`BACKUP_SCHEDULE` in `.env` to change the cron schedule; its default is
+`15 3 * * *`.
+
+## Retention
+
+The service keeps the union of these tiers:
+
+- Every daily dump from the last 30 days, including today.
+- The latest dump from each of the 12 completed calendar months before the
+  current month.
+- The latest dump from each of the two calendar years before that 12-month
+  window.
+
+The same dump can satisfy more than one tier. Retention only removes files
+named `paperless-YYYY-MM-DD.dump`; any older backup directories or unrelated
+files in `BACKUP_DIR` are left untouched.
 
 ## Restore
 
-### 1. Choose the backup
-
-Choose the backup set to restore and stop the stack:
-
-```sh
-BACKUP=backup/2026-09-21T14-28-25+0200
-docker compose down
-```
-
-### 2. Restore the files
-
-Restore the file-backed Paperless data:
+Use Unraid's Compose Manager to stop the `webserver` service before restoring
+so the application does not write to the database. Open the `backup`
+container's console and replace `2026-10-04` below with the date to restore:
 
 ```sh
-tar -xzf "$BACKUP/paperless-files.tar.gz" -C . data media export consume
+dropdb --if-exists -h "$PGHOST" -U "$PGUSER" "$PGDATABASE"
+createdb -h "$PGHOST" -U "$PGUSER" "$PGDATABASE"
+pg_restore --no-owner --no-acl -h "$PGHOST" -U "$PGUSER" \
+  -d "$PGDATABASE" "/backup/paperless-2026-10-04.dump"
 ```
 
-### 3. Restore the database
+Start `webserver` again from Compose Manager when the restore is complete.
+Restoring replaces the current database. Take a separate copy first if the
+current database may still be needed.
 
-Start only PostgreSQL:
-
-```sh
-docker compose up -d --wait db
-```
-
-Recreate the Paperless database:
-
-```sh
-docker compose exec -T db sh -c \
-	'dropdb --if-exists -U "$POSTGRES_USER" paperless && \
-	 createdb -U "$POSTGRES_USER" paperless'
-```
-
-Restore the PostgreSQL dump:
-
-```sh
-docker compose exec -T db sh -c \
-	'pg_restore --no-owner --no-acl -U "$POSTGRES_USER" -d paperless' \
-	< "$BACKUP/paperless.dump"
-```
-
-### 4. Start Paperless
-
-Start Paperless again:
-
-```sh
-docker compose up -d
-```
-
-This replaces the current database and file-backed data. Make a separate copy
-of the current `db`, `data`, `media`, `export`, and `consume` directories first
-if they may still be needed.
-
-Local backups are not enough for disaster recovery. Copy them to a different
-machine or object storage, preferably with an encrypted tool such as Restic,
-and periodically perform a test restore. Do not back up the live `db/`
-directory by copying it while PostgreSQL is running.
+These dumps cover only PostgreSQL. Back up the Paperless data, media, export,
+and consume directories separately. A later Duplicati job can include those
+directories and this dump folder, then copy the backup to another drive and
+S3. Periodically test a restore.
