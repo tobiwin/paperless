@@ -77,7 +77,7 @@ The `backup` service creates a PostgreSQL dump once a day at 03:15 in `Europe/Be
 On Unraid, deploy the stack with Compose Manager; the scheduled backup service starts with the stack and does not require Compose commands in the Unraid shell. To run a dump immediately, open the backup container's console and run:
 
 ```sh
-/usr/local/bin/paperless-postgres-backup
+sh /usr/local/bin/paperless-postgres-backup
 ```
 
 See [BACKUP.md](BACKUP.md) for retention, restore steps, and guidance for including Paperless files in a later Duplicati backup.
